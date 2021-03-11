@@ -5,7 +5,9 @@ use std::io::BufReader;
 use std::path::Path;
 
 pub enum EthereumTypes {
+    /// U160 - unsigned 160 bit number
     Address([u8; 20]),
+    /// U256 - unsigned 256 bit number
     U256([u8; 32]),
 }
 
@@ -18,8 +20,22 @@ fn transaction(
     let reader = BufReader::new(file);
     let functions: serde_json::Value =
         serde_json::from_reader(reader).map_err(|e| format!("Couldn't parse json: {}", e))?;
-    println!("{}", functions[2]["name"]);
-    Ok(Vec::new())
+    let mut i: usize = 0;
+    let mut function_found: bool = false;
+    while functions[i] != serde_json::Value::Null {
+        if functions[i]["name"] == function_name {
+            function_found = true;
+            break;
+        }
+        i += 1;
+    }
+    if !function_found {
+        Err(format!("Function name {} not found in the ABI json file.", function_name))
+    } else {
+        let name = &functions[i]["name"];
+        println!("name = {}", name);
+        Ok(Vec::new())
+    }
 }
 
 #[cfg(test)]
