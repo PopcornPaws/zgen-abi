@@ -1,0 +1,8 @@
+[package]
+name = "zgen-abi"
+version = "0.1.0"
+authors = ["Mark Melczer <melczer7@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+sha3 = "0.9.1"
