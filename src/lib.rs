@@ -11,6 +11,15 @@ pub enum EthereumTypes {
     U256([u8; 32]),
 }
 
+impl EthereumTypes {
+    fn name_as_str(&self) -> &str {
+        match self {
+            Self::Address(_) => "address",
+            Self::U256(_) => "uint256",
+        }
+    }
+}
+
 fn transaction(
     path_to_abi: &Path,
     function_name: &str,
@@ -40,11 +49,21 @@ fn transaction(
         ))
     } else {
         let name = &functions[i]["name"];
-        let mut j: usize = 0;
         let mut inputs = Vec::<&str>::new();
-        // list all the inputs of the file
-        while functions[i]["inputs"][j] != serde_json::Value::Null {
+        // list all the inputs of the file while iterating over input parameter list (lenght and types should match)
+        for (j, arg) in arguments.iter().enumerate() {
+            // if the j^th input type is a string, append it to the inputs
             if let Some(s) = functions[i]["inputs"][j]["type"].as_str() {
+                // check whehter the input arguments match such that we avoid the following non matching values:
+                // arguments: vec![Address, Address, U256]
+                // inputs: vec!["address", "uint256", "address"]
+                if s != arg.name_as_str() {
+                    return Err(format!(
+                        "Input arguments doesn't match. Expected {}, found {}.",
+                        inputs[j],
+                        arg.name_as_str()
+                    ));
+                }
                 inputs.push(s);
             } else {
                 return Err(format!(
@@ -52,8 +71,10 @@ fn transaction(
                     name
                 ));
             }
-            j += 1;
         }
+
+        println!("name = {}", name);
+        println!("inputs = {:?}", inputs);
         Ok(Vec::new())
     }
 }
