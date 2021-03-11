@@ -18,6 +18,21 @@ impl EthereumTypes {
             Self::U256(_) => "uint256",
         }
     }
+
+    fn value_as_u256(&self) -> [u8; 32] {
+        match self {
+            Self::Address(val) => {
+                let mut extended = vec![0_u8; 12];
+                extended.extend_from_slice(val);
+                let mut array = [0_u8; 32];
+                for (a, e) in array.iter_mut().zip(extended.iter()) {
+                    *a = *e;
+                }
+                array
+            }
+            Self::U256(val) => *val,
+        }
+    }
 }
 
 fn transaction(
@@ -42,6 +57,7 @@ fn transaction(
         i += 1;
     }
 
+    // if the given function name was not found, return an error
     if !function_found {
         Err(format!(
             "Function name {} not found in the ABI json file.",
@@ -73,8 +89,23 @@ fn transaction(
             }
         }
 
+        // TODO remove these prints
         println!("name = {}", name);
         println!("inputs = {:?}", inputs);
+
+        let mut signature = name.as_str().unwrap().to_owned() + "(";
+        for inp in inputs.iter() {
+            signature.push_str(inp);
+        }
+        signature.push(')');
+        // TODO remove this print
+        println!("sig = {}", signature);
+        let mut keccak = Keccak256::new();
+        keccak.update(signature);
+        let first_4_bytes = &keccak.finalize()[0..4];
+        // TODO remove this print
+        println!("{:x?}", first_4_bytes);
+
         Ok(Vec::new())
     }
 }
@@ -88,9 +119,6 @@ mod tests {
         let function_name = "balanceOf";
         let arguments = vec![EthereumTypes::Address([0; 20])];
         let t = transaction(&path, function_name, arguments).unwrap();
-        //let mut keccak = Keccak256::new();
-        //keccak.update("balanceOf(address)");
-        //println!("{:x?}", keccak.finalize());
         assert!(false);
     }
 }
