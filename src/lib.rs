@@ -1,11 +1,39 @@
+use sha3::{Digest, Keccak256};
+
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
+
+pub enum EthereumTypes {
+    Address([u8; 20]),
+    U256([u8; 32]),
+}
+
+fn transaction(
+    path_to_abi: &Path,
+    function_name: &str,
+    arguments: Vec<EthereumTypes>,
+) -> Result<Vec<u8>, String> {
+    let file = File::open(path_to_abi).map_err(|e| format!("Couldn't open file: {}", e))?;
+    let reader = BufReader::new(file);
+    let functions: serde_json::Value =
+        serde_json::from_reader(reader).map_err(|e| format!("Couldn't parse json: {}", e))?;
+    println!("{}", functions[2]["name"]);
+    Ok(Vec::new())
+}
+
 #[cfg(test)]
 mod tests {
-    use sha3::{Digest, Keccak256};
+    use super::*;
     #[test]
     fn it_works() {
-        let mut keccak = Keccak256::new();
-        keccak.update("balanceOf(address)");
-        println!("{:x?}", keccak.finalize());
+        let path = Path::new("src/rust_abi.json");
+        let function_name = "balanceOf";
+        let arguments = vec![EthereumTypes::Address([0; 20])];
+        let t = transaction(&path, function_name, arguments).unwrap();
+        //let mut keccak = Keccak256::new();
+        //keccak.update("balanceOf(address)");
+        //println!("{:x?}", keccak.finalize());
         assert!(false);
     }
 }
