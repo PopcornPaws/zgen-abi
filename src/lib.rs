@@ -34,18 +34,23 @@ fn transaction(
     }
 
     if !function_found {
-        Err(format!("Function name {} not found in the ABI json file.", function_name))
+        Err(format!(
+            "Function name {} not found in the ABI json file.",
+            function_name
+        ))
     } else {
         let name = &functions[i]["name"];
         let mut j: usize = 0;
         let mut inputs = Vec::<&str>::new();
         // list all the inputs of the file
         while functions[i]["inputs"][j] != serde_json::Value::Null {
-            println!("hello");
             if let Some(s) = functions[i]["inputs"][j]["type"].as_str() {
                 inputs.push(s);
             } else {
-                return Err(format!("Input type of function {} was not a String. ABI is not properly formatted.", name));
+                return Err(format!(
+                    "Input type of function {} was not a String. ABI is not properly formatted.",
+                    name
+                ));
             }
             j += 1;
         }
