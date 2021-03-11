@@ -20,8 +20,11 @@ fn transaction(
     let reader = BufReader::new(file);
     let functions: serde_json::Value =
         serde_json::from_reader(reader).map_err(|e| format!("Couldn't parse json: {}", e))?;
+
     let mut i: usize = 0;
     let mut function_found: bool = false;
+
+    // find the function name in the parsed json file
     while functions[i] != serde_json::Value::Null {
         if functions[i]["name"] == function_name {
             function_found = true;
@@ -29,11 +32,23 @@ fn transaction(
         }
         i += 1;
     }
+
     if !function_found {
         Err(format!("Function name {} not found in the ABI json file.", function_name))
     } else {
         let name = &functions[i]["name"];
-        println!("name = {}", name);
+        let mut j: usize = 0;
+        let mut inputs = Vec::<&str>::new();
+        // list all the inputs of the file
+        while functions[i]["inputs"][j] != serde_json::Value::Null {
+            println!("hello");
+            if let Some(s) = functions[i]["inputs"][j]["type"].as_str() {
+                inputs.push(s);
+            } else {
+                return Err(format!("Input type of function {} was not a String. ABI is not properly formatted.", name));
+            }
+            j += 1;
+        }
         Ok(Vec::new())
     }
 }
