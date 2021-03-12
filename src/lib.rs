@@ -1,3 +1,4 @@
+#![allow(unused)]
 use sha3::{Digest, Keccak256};
 
 use std::fs::File;
@@ -22,13 +23,12 @@ impl EthereumTypes {
     fn value_as_u256(&self) -> [u8; 32] {
         match self {
             Self::Address(val) => {
-                let mut extended = vec![0_u8; 12];
-                extended.extend_from_slice(val);
-                let mut array = [0_u8; 32];
-                for (a, e) in array.iter_mut().zip(extended.iter()) {
-                    *a = *e;
+                let mut extended = [0_u8; 32];
+                // extend the 20 byte address by writing it to a 32 byte zero array
+                for i in 12..32 {
+                    extended[i] = val[i - 12];
                 }
-                array
+                extended
             }
             Self::U256(val) => *val,
         }
@@ -102,11 +102,15 @@ fn transaction(
         println!("sig = {}", signature);
         let mut keccak = Keccak256::new();
         keccak.update(signature);
-        let first_4_bytes = &keccak.finalize()[0..4];
+        let mut first_4_bytes = (&keccak.finalize()[0..4]).to_vec();
         // TODO remove this print
         println!("{:x?}", first_4_bytes);
 
-        Ok(Vec::new())
+        for arg in arguments {
+            first_4_bytes.extend_from_slice(&arg.value_as_u256());
+        }
+        println!("{:x?}", first_4_bytes);
+        Ok(first_4_bytes)
     }
 }
 
@@ -117,9 +121,19 @@ mod tests {
     fn it_works() {
         let path = Path::new("src/rust_abi.json");
         let function_name = "balanceOf";
-        let arguments = vec![EthereumTypes::Address([0; 20])];
+        let arguments = vec![EthereumTypes::Address([
+            0x30, 0xE7, 0xd7, 0xFf, 0xF8, 0x5C, 0x8d, 0x0E, 0x77, 0x51, 0x40, 0xb1, 0xaD, 0x93,
+            0xC2, 0x30, 0xD5, 0x59, 0x52, 0x07,
+        ])];
         let t = transaction(&path, function_name, arguments).unwrap();
-        assert!(false);
+        assert_eq!(
+            t,
+            vec![
+                0x70, 0xa0, 0x82, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x30, 0xe7, 0xd7, 0xff, 0xf8, 0x5c, 0x8d, 0x0e, 0x77, 0x51, 0x40, 0xb1,
+                0xad, 0x93, 0xc2, 0x30, 0xd5, 0x59, 0x52, 0x07
+            ]
+        );
     }
 }
 
