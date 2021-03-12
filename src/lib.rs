@@ -8,7 +8,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-fn transaction(
+pub fn transaction(
     path_to_abi: &Path,
     function_name: &str,
     arguments: Vec<EthereumTypes>,
