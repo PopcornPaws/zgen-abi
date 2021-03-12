@@ -74,7 +74,7 @@ fn transaction(
 
     // find the function name in the parsed json file
     while functions[i] != serde_json::Value::Null {
-        if functions[i]["name"] == function_name {
+        if functions[i]["name"] == function_name && functions[i]["type"] == "function" {
             function_found = true;
             break;
         }
@@ -84,7 +84,7 @@ fn transaction(
     // if the given function name was not found, return an error
     if !function_found {
         Err(format!(
-            "Function name {} not found in the ABI json file.",
+            "Function name {} not found in the ABI json file, or its type is not a function.",
             function_name
         ))
     } else {
